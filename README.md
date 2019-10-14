@@ -53,7 +53,7 @@ var buildResult = new DioxideTypeBuilder(default)
     .Build();
 ```
 
-Register types in container
+Register types in container (using autofac container )
 ```
 if (buildResult.IsSuccess)
 {
