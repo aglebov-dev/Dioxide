@@ -11,9 +11,9 @@ namespace Dioxide.Samples
     {
         public static void Sample()
         {
-            new DioxideTypeBuilder2(default).Build();
+            new DioxideTypeBuilder(default).Build();
 
-            var result = new DioxideTypeBuilder2(default)
+            var result = new DioxideTypeBuilder(default)
               .GenerateDecorator<IDoSomthing>(x =>
               {
                   x.With<InformationVisitor>();

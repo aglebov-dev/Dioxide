@@ -1,61 +1,72 @@
-﻿//using System;
-//using System.Collections.Generic;
-//using System.Linq;
-//using System.Reflection;
-//using Dioxide.Contracts;
-//using Dioxide.Visitor;
-//using Microsoft.CodeAnalysis.CSharp;
-//using Microsoft.CodeAnalysis.CSharp.Syntax;
+﻿using System;
+using System.Linq;
+using System.Collections.Generic;
+using Dioxide.Contracts;
+using Dioxide.InternalBuilders;
+using Dioxide.InternalTypes;
 
-//namespace Dioxide
-//{
-//    public class DioxideTypeBuilder
-//    {
-//        private readonly DioxideBuilder _parent;
-//        private readonly Type _originType;
-//        private readonly IGeneratorDiagnostics _diagnostics;
-//        private readonly HashSet<Type> _ctorTypes;
-//        private readonly string _typeName;
+namespace Dioxide
+{
+    public class DioxideTypeBuilder
+    {
+        private readonly IGeneratorDiagnostics _diagnostics;
 
-//        public IEnumerable<Type> Types => _ctorTypes.Append(_originType);
-//        public string TypeName => _typeName;
+        private readonly Dictionary<Type, TypeConfigurator> _hash;
 
-//        public DioxideTypeBuilder(DioxideBuilder parent, Type type, IGeneratorDiagnostics diagnostics)
-//        {
-//            _parent = parent;
-//            _originType = type;
-//            _diagnostics = diagnostics;
-//            _ctorTypes = new HashSet<Type>();
-//            _typeName = $"{type.Name}_{Guid.NewGuid().ToString("N")}";
-//        }
+        public DioxideTypeBuilder(IGeneratorDiagnostics diagnostics)
+        {
+            _hash = new Dictionary<Type, TypeConfigurator>();
+            _diagnostics = diagnostics;
+        }
 
-//        public DioxideTypeBuilder With<T>()
-//        {
-//            _ctorTypes.Add(typeof(T));
-//            return this;
-//        }
+        public DioxideTypeBuilder GenerateDecorator<TInterface>(Action<IDioxideTypeConfigurator<IVisitor>> configurationAction)
+        {
+            var configurator = GetOrCreateTypeConfigurator<TInterface>();
+            configurator.AppendGenerateType(GenerateType.Decorator);
+            configurationAction?.Invoke(configurator.VisitorConfigurator);
 
-//        public DioxideTypeBuilder CreateType<T>()
-//            where T : class
-//        {
-//            return _parent.CreateType<T>();
-//        }
+            return this;
+        }
 
-//        public BuildResult Build()
-//        {
-//            return _parent.Build();
-//        }
+        public DioxideTypeBuilder GenerateDecorator<TInterface>()
+        {
+            var configurator = GetOrCreateTypeConfigurator<TInterface>();
+            configurator.AppendGenerateType(GenerateType.Decorator);
 
-//        internal ClassDeclarationSyntax BuildType(CSharpCompilation compilation)
-//        {
-//            var visitorBuilder = new VisitorBuilder(compilation);
-//            return visitorBuilder.Build(_typeName, _originType, _ctorTypes.ToArray());
-//        }
+            return this;
+        }
 
-//        internal BuildResultType ExtractType(Assembly assembly)
-//        {
-//            var type = assembly.GetType(_typeName, true);
-//            return new BuildResultType(type, _originType);
-//        }
-//    }
-//}
+        private TypeConfigurator GetOrCreateTypeConfigurator<TInterface>()
+        {
+            var key = typeof(TInterface);
+            if (!_hash.TryGetValue(key, out var configurator))
+            {
+                _hash[key] = configurator = new TypeConfigurator(key);
+            }
+
+            return configurator;
+        }
+
+        public IDioxideResult Build()
+        {
+            var compileBuilder = new CompilationBuilder(_diagnostics);
+            var assemblyBuilder = new AssemblyBuilder(_diagnostics);
+            var compile = compileBuilder.Create();
+            var results = _hash.SelectMany(x => x.Value.GenerateTypes(compile));
+            var syntaxes = results.Select(x => x.Syntax).ToArray();
+            var assembly = assemblyBuilder.CraeteAssembly(compile, syntaxes);
+
+            if (assembly != null)
+            {
+                var generateResults =
+                    from result in results
+                    let type = assembly.GetType($"{assemblyBuilder.AssemblyNamespace}.{result.TypeName}")
+                    select new DioxideTypeBuilderResult(result.GenerateType, result.OriginType, type);
+
+                return new DioxideResult(true, generateResults.ToArray());
+            }
+
+            return new DioxideResult(false, default);
+        }
+    }
+}
