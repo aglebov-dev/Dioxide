@@ -1,16 +1,17 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace Dioxide.Contracts
 {
-    public class VisitorsGroup
+    public class InterceptorsGroup
     {
-        private readonly LinkedList<IVisitor> _visitors;
-        public VisitorsGroup()
+        private readonly LinkedList<IProxyInterceptor> _visitors;
+        public InterceptorsGroup()
         {
-            _visitors = new LinkedList<IVisitor>();
+            _visitors = new LinkedList<IProxyInterceptor>();
         }
-        public void Add(IVisitor visitor)
+        public void Add(IProxyInterceptor visitor)
         {
             if (visitor != null)
             {
@@ -39,6 +40,16 @@ namespace Dioxide.Contracts
             }
 
             return exception;
+        }
+        public IMethodResult CatchOverrideResult(string methodName, IMethodArgs args, Exception exception)
+        {
+            var lastResult = _visitors
+                .OfType<ICatchResultsOverrider>()
+                .Select(x => x.CatchOverrideResult(methodName, args, exception))
+                .Where(x => x != null)
+                .LastOrDefault();
+
+            return lastResult;
         }
         public void Finaly(string methodName, IMethodArgs args, IMethodResult result)
         {

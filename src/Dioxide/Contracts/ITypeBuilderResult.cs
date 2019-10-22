@@ -2,7 +2,7 @@
 
 namespace Dioxide.Contracts
 {
-    public interface IDioxideTypeBuilderResult
+    public interface ITypeBuilderResult
     {
         GenerateType GenerateType { get; }
         Type OriginType { get; }

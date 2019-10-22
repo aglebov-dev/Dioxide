@@ -9,7 +9,7 @@ using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using static Microsoft.CodeAnalysis.CSharp.SyntaxFactory;
 
-namespace Dioxide.Visitor.Parts
+namespace Dioxide.Proxy.Parts
 {
     internal class CtorBuilderResult
     {
@@ -34,9 +34,9 @@ namespace Dioxide.Visitor.Parts
 
         public CtorBuilder(Compilation compilation)
         {
-            _iVisitorSymbols = compilation.GetSymbols<IVisitor>();
-            _visitorFieldIdentifier = "_visitors";
-            _visitorFieldType = compilation.GetSymbols<VisitorsGroup>().GlobalTypeName();
+            _iVisitorSymbols = compilation.GetSymbols<IProxyInterceptor>();
+            _visitorFieldIdentifier = "_interceptors";
+            _visitorFieldType = compilation.GetSymbols<InterceptorsGroup>().GlobalTypeName();
         }
 
         public CtorBuilderResult Create(string typeName, INamedTypeSymbol original, INamedTypeSymbol[] types)

@@ -10,8 +10,10 @@ namespace Dioxide.Tools
         public string ResultVar { get; } = "result";
         public string MethodResultVar { get; } = "methodResult";
         public string CarchResultVar { get; } = "ex";
-
         public string MethodResultSet { get; } = nameof(MethodResult.Set);
         public string MethodArgsSet { get; } = nameof(MethodArgs.Set);
+        public string HasResult { get; } = nameof(MethodResult.HasResult);
+        public string GetResultOrDefault { get; } = nameof(MethodResult.GetResultOrDefault);
+
     }
 }

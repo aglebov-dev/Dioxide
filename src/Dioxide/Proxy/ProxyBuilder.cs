@@ -2,18 +2,18 @@
 using System;
 using System.Linq;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
-using Dioxide.Visitor.Parts;
+using Dioxide.Proxy.Parts;
 using Dioxide.Tools.Extensions;
 
-namespace Dioxide.Visitor
+namespace Dioxide.Proxy
 {
-    public class VisitorBuilder
+    public class ProxyBuilder
     {
         private readonly Compilation _compilation;
         private readonly CtorBuilder _ctorBuilder;
         private readonly MethodBuilder _methodsBuildere;
 
-        public VisitorBuilder(Compilation compilation)
+        public ProxyBuilder(Compilation compilation)
         {
             _compilation = compilation;
             _ctorBuilder = new CtorBuilder(compilation);

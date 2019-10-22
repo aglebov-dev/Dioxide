@@ -8,12 +8,12 @@ namespace Dioxide.InternalTypes
     internal class TypeConfigurator
     {
         private readonly HashSet<GenerateType> _types;
-        public DioxideDecoratorConfigurator VisitorConfigurator { get; }
+        public DecoratorConfigurator VisitorConfigurator { get; }
 
         public TypeConfigurator(Type originType)
         {
             _types = new HashSet<GenerateType>();
-            VisitorConfigurator = new DioxideDecoratorConfigurator(originType);
+            VisitorConfigurator = new DecoratorConfigurator(originType);
         }
 
         internal TypeConfigurator AppendGenerateType(GenerateType type)
@@ -24,11 +24,11 @@ namespace Dioxide.InternalTypes
 
         internal IEnumerable<TypeConfiguratorResult> GenerateTypes(Compilation compilation)
         {
-            if (_types.Contains(GenerateType.Decorator))
+            if (_types.Contains(GenerateType.Proxy))
             {
                 yield return new TypeConfiguratorResult
                 (
-                   generateType: GenerateType.Decorator,
+                   generateType: GenerateType.Proxy,
                    syntax: VisitorConfigurator.BuildType(compilation),
                    typeName: VisitorConfigurator.TypeName,
                    originType: VisitorConfigurator.OriginType

@@ -68,6 +68,27 @@ namespace Dioxide.Tools.Extensions
             return exp;
         }
 
+        public static ExpressionSyntax InvokeSyncGenericExpression(this string name, string method, TypeSyntax genericType, params ExpressionSyntax[] arguments)
+        {
+            var expression = MemberAccessExpression
+            (
+                SyntaxKind.SimpleMemberAccessExpression,
+                IdentifierName(name),
+                Token(SyntaxKind.DotToken),
+                GenericName(Identifier(method), TypeArgumentList(SingletonSeparatedList(genericType)))
+            );
+
+            var argsSyntax = SeparatedList(arguments.Select(Argument));
+            var argsList = ArgumentList().WithArguments(argsSyntax);
+            var exp = InvocationExpression
+            (
+                expression,
+                argsList
+            );
+
+            return exp;
+        }
+
         public static ExpressionSyntax CallMethodSyncExpression(this string method, params ExpressionSyntax[] arguments)
         {
             var argumentsSyntax = arguments.Select(Argument);
@@ -83,6 +104,19 @@ namespace Dioxide.Tools.Extensions
             var exp = name.InvokeSyncExpression(method, arguments);
 
             return AwaitExpression(exp);
+        }
+
+        public static ExpressionSyntax PropertyGetExpression(this string identifier, string propertyName)
+        {
+            var letf = IdentifierName(identifier);
+            var memberAccessExpression = MemberAccessExpression(
+               SyntaxKind.SimpleMemberAccessExpression,
+               letf,
+               Token(SyntaxKind.DotToken),
+               IdentifierName(propertyName)
+            );
+
+            return memberAccessExpression;
         }
     }
 }

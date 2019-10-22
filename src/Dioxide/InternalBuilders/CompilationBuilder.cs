@@ -19,7 +19,7 @@ namespace Dioxide.InternalBuilders
             {
                 Assembly.Load("System.Runtime"),
                 typeof(Enumerable).GetTypeInfo().Assembly,
-                typeof(List<IVisitor>).Assembly,
+                typeof(List<IProxyInterceptor>).Assembly,
                 typeof(object).Assembly,
                 typeof(object).GetTypeInfo().Assembly,
                 typeof(CompilationBuilder).GetTypeInfo().Assembly

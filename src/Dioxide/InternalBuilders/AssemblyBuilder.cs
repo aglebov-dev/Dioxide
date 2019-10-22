@@ -31,9 +31,12 @@ namespace Dioxide.InternalBuilders
             var stream = new MemoryStream();
             var emitResult = inner_compilation.Emit(stream);
 
-            var errors = string.Join("\n", emitResult.Diagnostics.Select(x => x.ToString()).ToArray());
-            _diagnostics?.CompilationResult(@compilationUnit.NormalizeWhitespace(elasticTrivia: true).ToFullString());
-            _diagnostics?.CompilationResult(errors);
+            if (_diagnostics != null)
+            {
+                var errors = string.Join("\n", emitResult.Diagnostics.Select(x => x.ToString()).ToArray());
+                _diagnostics?.CompilationResult(@compilationUnit.NormalizeWhitespace(elasticTrivia: true).ToFullString());
+                _diagnostics?.CompilationResult(errors); 
+            }
 
             if (emitResult.Success)
             {

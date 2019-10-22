@@ -10,7 +10,7 @@ using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using static Microsoft.CodeAnalysis.CSharp.SyntaxFactory;
 
-namespace Dioxide.Visitor.Parts
+namespace Dioxide.Proxy.Parts
 {
     internal class MethodBuildResult
     {
@@ -59,7 +59,7 @@ namespace Dioxide.Visitor.Parts
                 var innerMethods = GetMethods(declaration);
                 var externalMethods = declaration.Interfaces.SelectMany(GetMethods);
 
-                var helper = new VisitorsGroupHelper(ctorResult.VisitorFieldIdentifier);
+                var helper = new InterceptorsGroupHelper(ctorResult.VisitorFieldIdentifier);
                 var methods = innerMethods.Concat(externalMethods).ToArray();
 
                 var s = methods.Select(x => CreateMethod(x, ctorResult, helper)).ToArray();
@@ -85,7 +85,7 @@ namespace Dioxide.Visitor.Parts
                 .Where(x => x.MethodKind == MethodKind.Ordinary);
         }
 
-        private MethodDeclarationSyntax CreateMethod(IMethodSymbol methodSymbol, CtorBuilderResult ctorResult, VisitorsGroupHelper helper)
+        private MethodDeclarationSyntax CreateMethod(IMethodSymbol methodSymbol, CtorBuilderResult ctorResult, InterceptorsGroupHelper helper)
         {
             var beforTryBody = BeforeTryBlock(methodSymbol);
             var tryBody = TryBlock(methodSymbol, ctorResult, helper).ToArray();
@@ -156,7 +156,7 @@ namespace Dioxide.Visitor.Parts
             }
         }
 
-        private IEnumerable<StatementSyntax> TryBlock(IMethodSymbol methodSymbol, CtorBuilderResult ctorResult, VisitorsGroupHelper helper)
+        private IEnumerable<StatementSyntax> TryBlock(IMethodSymbol methodSymbol, CtorBuilderResult ctorResult, InterceptorsGroupHelper helper)
         {
             var isResult = IsResult(methodSymbol);
             var isAsync = IsAsync(methodSymbol);
@@ -195,9 +195,18 @@ namespace Dioxide.Visitor.Parts
             }
         }
 
-        private IEnumerable<StatementSyntax> CatchBlock(IMethodSymbol methodSymbol, VisitorsGroupHelper helper)
+        private IEnumerable<StatementSyntax> CatchBlock(IMethodSymbol methodSymbol, InterceptorsGroupHelper helper)
         {
-            
+            var isResult = IsResult(methodSymbol);
+            if (isResult)
+            {
+                foreach (var item in CatchOverrideResultBlock(methodSymbol, helper))
+                {
+                    yield return item;
+                }
+
+            }
+
             var ifExpr = BinaryExpression(
                 SyntaxKind.EqualsExpression, 
                 IdentifierName(_idHelper.CarchResultVar),
@@ -212,11 +221,45 @@ namespace Dioxide.Visitor.Parts
 
             yield return _idHelper.CarchResultVar.VarEqualsStatement(exp);
             yield return IfStatement(ifExpr,
-                ThrowStatement(),
-                ElseClause(ThrowStatement(IdentifierName(_idHelper.CarchResultVar)))
+                Block(ThrowStatement()),
+                ElseClause(Block(ThrowStatement(IdentifierName(_idHelper.CarchResultVar))))
             );
         }
-        private IEnumerable<StatementSyntax> FinalyBlock(IMethodSymbol methodSymbol, VisitorsGroupHelper helper)
+
+        private IEnumerable<StatementSyntax> CatchOverrideResultBlock(IMethodSymbol methodSymbol, InterceptorsGroupHelper helper)
+        {
+            var overrideResult = "overrideResult";
+
+            var isAsync = IsAsync(methodSymbol);
+            var returnType = methodSymbol.ReturnType.ToQualifiedTypeName();
+
+            var overrideResultExpr = helper.CatchOverrideResultMethod.CallMethodSyncExpression(
+                IdentifierName(_idHelper.MethodVar),
+                IdentifierName(_idHelper.ArgsVar),
+                IdentifierName(_idHelper.ExceptionVar)
+            );
+
+            var hasResultInvokeExpr = overrideResult.InvokeSyncGenericExpression(
+                method: _idHelper.HasResult, 
+                genericType: returnType
+            );
+
+            var getResultOrDefaultInvokeExpr = overrideResult.InvokeSyncGenericExpression(
+                method: _idHelper.GetResultOrDefault,
+                genericType: returnType
+            );
+
+            var returnExpr = isAsync
+                ? AwaitExpression(getResultOrDefaultInvokeExpr)
+                : getResultOrDefaultInvokeExpr;
+
+            yield return overrideResult.VarEqualsStatement(overrideResultExpr);
+            yield return IfStatement(hasResultInvokeExpr,
+                 Block(ReturnStatement(returnExpr))
+            );
+        }
+
+        private IEnumerable<StatementSyntax> FinalyBlock(IMethodSymbol methodSymbol, InterceptorsGroupHelper helper)
         {
             yield return helper.FinalyMethod.CallMethodSyncStatement(
                 IdentifierName(_idHelper.MethodVar),

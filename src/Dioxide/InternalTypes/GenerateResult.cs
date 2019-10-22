@@ -2,12 +2,12 @@
 
 namespace Dioxide.InternalTypes
 {
-    internal class DioxideResult : IDioxideResult
+    internal class GenerateResult : IGenerateResult
     {
         public bool IsSuccess { get; }
-        public IDioxideTypeBuilderResult[] Types { get; }
+        public ITypeBuilderResult[] Types { get; }
 
-        public DioxideResult(bool isSuccess, IDioxideTypeBuilderResult[] types)
+        public GenerateResult(bool isSuccess, ITypeBuilderResult[] types)
         {
             IsSuccess = isSuccess;
             Types = types;

@@ -2,6 +2,7 @@
 {
     public interface IMethodResult
     {
+        bool HasResult<TResult>();
         TResult GetResultOrDefault<TResult>();
     }
 }

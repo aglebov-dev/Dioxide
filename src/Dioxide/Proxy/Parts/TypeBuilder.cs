@@ -6,7 +6,7 @@ using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Dioxide.Tools.Extensions;
 using static Microsoft.CodeAnalysis.CSharp.SyntaxFactory;
 
-namespace Dioxide.Visitor.Parts
+namespace Dioxide.Proxy.Parts
 {
     internal class TypeBuilder
     {

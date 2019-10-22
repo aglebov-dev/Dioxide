@@ -1,9 +1,9 @@
 ﻿using System;
 using Dioxide.Contracts;
 
-namespace Dioxide.Samples.Decorator
+namespace Dioxide.Samples.Proxy
 {
-    public class InformationVisitor : IVisitor
+    public class InformationVisitor : IProxyInterceptor
     {
         public void Enter(string methodName, IMethodArgs args)
         {

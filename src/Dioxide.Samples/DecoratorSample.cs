@@ -1,19 +1,21 @@
 ﻿using Autofac;
 using Dioxide.Autofac;
-using Dioxide.Samples.Decorator;
+using Dioxide.Samples.Proxy;
 using System;
 using System.Collections.Generic;
 using System.Text;
 
 namespace Dioxide.Samples
 {
-    public static class DecoratorSample
+    public class DecoratorSample: Contracts.IGeneratorDiagnostics
     {
+        public Action<string> CompilationResult => Console.WriteLine;
+
         public static void Sample()
         {
             new DioxideTypeBuilder(default).Build();
 
-            var result = new DioxideTypeBuilder(default)
+            var result = new DioxideTypeBuilder(new DecoratorSample())
               .GenerateDecorator<IDoSomthing>(x =>
               {
                   x.With<InformationVisitor>();
@@ -32,15 +34,15 @@ namespace Dioxide.Samples
 
             var type = builder.Build().Resolve<IDoSomthing>();
 
-            try
-            {
-                type.GoTask("dioxide", 1500).GetAwaiter().GetResult();
-                type.DoSomething();
-            }
-            catch
-            {
+            //try
+            //{
+            //    type.GoTask("dioxide", 1500).GetAwaiter().GetResult();
+            //    type.DoSomething();
+            //}
+            //catch
+            //{
                 
-            }
+            //}
         }
     }
 }

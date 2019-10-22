@@ -5,7 +5,7 @@ namespace Dioxide.Autofac
 {
     public static class DioxideAutofacExcensions
     {
-        public static ContainerBuilder RegistryDioxideTypes(this ContainerBuilder builder, IDioxideResult dioxideResult)
+        public static ContainerBuilder RegistryDioxideTypes(this ContainerBuilder builder, IGenerateResult dioxideResult)
         {
             if (dioxideResult.IsSuccess)
             {

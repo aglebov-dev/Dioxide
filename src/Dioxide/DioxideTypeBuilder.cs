@@ -19,10 +19,10 @@ namespace Dioxide
             _diagnostics = diagnostics;
         }
 
-        public DioxideTypeBuilder GenerateDecorator<TInterface>(Action<IDioxideTypeConfigurator<IVisitor>> configurationAction)
+        public DioxideTypeBuilder GenerateDecorator<TInterface>(Action<ITypeConfigurator<IProxyInterceptor>> configurationAction)
         {
             var configurator = GetOrCreateTypeConfigurator<TInterface>();
-            configurator.AppendGenerateType(GenerateType.Decorator);
+            configurator.AppendGenerateType(GenerateType.Proxy);
             configurationAction?.Invoke(configurator.VisitorConfigurator);
 
             return this;
@@ -31,7 +31,7 @@ namespace Dioxide
         public DioxideTypeBuilder GenerateDecorator<TInterface>()
         {
             var configurator = GetOrCreateTypeConfigurator<TInterface>();
-            configurator.AppendGenerateType(GenerateType.Decorator);
+            configurator.AppendGenerateType(GenerateType.Proxy);
 
             return this;
         }
@@ -47,7 +47,7 @@ namespace Dioxide
             return configurator;
         }
 
-        public IDioxideResult Build()
+        public IGenerateResult Build()
         {
             var compileBuilder = new CompilationBuilder(_diagnostics);
             var assemblyBuilder = new AssemblyBuilder(_diagnostics);
@@ -61,12 +61,12 @@ namespace Dioxide
                 var generateResults =
                     from result in results
                     let type = assembly.GetType($"{assemblyBuilder.AssemblyNamespace}.{result.TypeName}")
-                    select new DioxideTypeBuilderResult(result.GenerateType, result.OriginType, type);
+                    select new TypeBuilderResult(result.GenerateType, result.OriginType, type);
 
-                return new DioxideResult(true, generateResults.ToArray());
+                return new GenerateResult(true, generateResults.ToArray());
             }
 
-            return new DioxideResult(false, default);
+            return new GenerateResult(false, default);
         }
     }
 }

@@ -2,7 +2,7 @@
 
 namespace Dioxide.Contracts
 {
-    public interface IVisitor
+    public interface IProxyInterceptor
     {
         void Enter(string methodName, IMethodArgs args);
         void Exit(string methodName, IMethodArgs args, IMethodResult result);

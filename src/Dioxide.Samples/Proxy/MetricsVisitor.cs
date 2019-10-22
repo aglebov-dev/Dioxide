@@ -2,9 +2,9 @@
 using System.Diagnostics;
 using Dioxide.Contracts;
 
-namespace Dioxide.Samples.Decorator
+namespace Dioxide.Samples.Proxy
 {
-    public class MetricsVisitor : IVisitor
+    public class MetricsVisitor : IProxyInterceptor
     {
         private Stopwatch stopwatch;
 

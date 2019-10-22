@@ -4,6 +4,11 @@
     {
         private IMethodResultOfT _result;
 
+        public bool HasResult<TResult>()
+        {
+            return _result is MethodResultOfT<TResult>;
+        }
+
         public TResult GetResultOrDefault<TResult>()
         {
             if (_result is MethodResultOfT<TResult> result)
@@ -19,11 +24,19 @@
             _result = new MethodResultOfT<T> { Value = value };
         }
 
-        private interface IMethodResultOfT { }
+        private interface IMethodResultOfT 
+        {
+            object GetResult();
+        }
 
         private class MethodResultOfT<T> : IMethodResultOfT
         {
             public T Value { get; set; }
+
+            public object GetResult()
+            {
+                return Value;
+            }
         }
     }
 }

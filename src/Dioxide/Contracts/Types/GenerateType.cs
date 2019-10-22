@@ -2,6 +2,6 @@
 {
     public enum GenerateType
     {
-        Decorator = 1
+        Proxy = 1
     }
 }
