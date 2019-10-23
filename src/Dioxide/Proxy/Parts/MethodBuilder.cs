@@ -12,30 +12,18 @@ using static Microsoft.CodeAnalysis.CSharp.SyntaxFactory;
 
 namespace Dioxide.Proxy.Parts
 {
-    internal class MethodBuildResult
-    {
-        public MethodDeclarationSyntax[] Methods { get; }
-
-        public MethodBuildResult(MethodDeclarationSyntax[] methods)
-        {
-            Methods = methods;
-        }
-    }
-
     internal class MethodBuilder
     {
-        private readonly Identifiers _idHelper;
-        private readonly INamedTypeSymbol _resultSymbols;
-        private readonly INamedTypeSymbol _argsSymbols;
+        private readonly INamedTypeSymbol _methodResultSymbols;
+        private readonly INamedTypeSymbol _methodArgsSymbols;
         private readonly INamedTypeSymbol _exceptionSymbols;
         private readonly HashSet<INamedTypeSymbol> _voidAsyncTypes;
         private readonly HashSet<INamedTypeSymbol> _asyncTypes;
 
         public MethodBuilder(Compilation compilation)
         {
-            _idHelper = new Identifiers();
-            _resultSymbols = compilation.GetSymbols<MethodResult>();
-            _argsSymbols = compilation.GetSymbols<MethodArgs>();
+            _methodResultSymbols = compilation.GetSymbols<MethodResult>();
+            _methodArgsSymbols = compilation.GetSymbols<MethodArgs>();
             _exceptionSymbols = compilation.GetSymbols<Exception>();
 
             _voidAsyncTypes = new HashSet<INamedTypeSymbol>
@@ -58,13 +46,13 @@ namespace Dioxide.Proxy.Parts
             {
                 var innerMethods = GetMethods(declaration);
                 var externalMethods = declaration.Interfaces.SelectMany(GetMethods);
-
-                var helper = new InterceptorsGroupHelper(ctorResult.VisitorFieldIdentifier);
                 var methods = innerMethods.Concat(externalMethods).ToArray();
 
-                var s = methods.Select(x => CreateMethod(x, ctorResult, helper)).ToArray();
+                var methodDeclarations = methods
+                    .Select(methodSymbols => CreateMethod(methodSymbols, ctorResult))
+                    .ToArray();
 
-                return new MethodBuildResult(s);
+                return new MethodBuildResult(methodDeclarations);
             }
 
             throw new ArgumentException("The kind of type must be a interface");
@@ -85,16 +73,19 @@ namespace Dioxide.Proxy.Parts
                 .Where(x => x.MethodKind == MethodKind.Ordinary);
         }
 
-        private MethodDeclarationSyntax CreateMethod(IMethodSymbol methodSymbol, CtorBuilderResult ctorResult, InterceptorsGroupHelper helper)
+        private MethodDeclarationSyntax CreateMethod(IMethodSymbol methodSymbol, CtorBuilderResult ctorResult)
         {
-            var beforTryBody = BeforeTryBlock(methodSymbol);
-            var tryBody = TryBlock(methodSymbol, ctorResult, helper).ToArray();
-            var catchBody = CatchBlock(methodSymbol, helper).ToArray();
-            var finalyBody = FinalyBlock(methodSymbol, helper).ToArray();
+            var variables = new MethodVariables(methodSymbol);
+            var parameters = new MethodParameters(methodSymbol);
+
+            var beforTryBody = BeforeTryBlock(methodSymbol, variables, parameters);
+            var tryBody = TryBlock(methodSymbol, ctorResult, variables, parameters).ToArray();
+            var catchBody = CatchBlock(methodSymbol, variables).ToArray();
+            var finalyBody = FinalyBlock(methodSymbol, variables).ToArray();
 
             var catchClause = CatchClause()
                 .WithDeclaration(CatchDeclaration(_exceptionSymbols.ToQualifiedTypeName())
-                .WithIdentifier(Identifier(_idHelper.ExceptionVar)))
+                .WithIdentifier(Identifier(variables.CATCH_BLOCK_EXCEPTION_VARIABLE)))
                 .WithBlock(Block(catchBody));
 
             var finalyClause = FinallyClause()
@@ -112,7 +103,7 @@ namespace Dioxide.Proxy.Parts
             var returnType = methodSymbol.ReturnType.ToQualifiedTypeName();
             var methodName = Identifier(methodSymbol.Name);
             var methodModifiers = GetModifiers(methodSymbol);
-            var methodParameters = methodSymbol.Parameters.Select(x => x.Type.ParameterExpression(x.Name)).ToArray();
+            var methodParameters = parameters.Parameters.Select(x => x.Syntax).ToArray();
             return MethodDeclaration(returnType, methodName)
                 .WithModifiers(methodModifiers)
                 .AddParameterListParameters(methodParameters)
@@ -142,39 +133,41 @@ namespace Dioxide.Proxy.Parts
             return  TokenList(tokens);
         }
 
-        private IEnumerable<StatementSyntax> BeforeTryBlock(IMethodSymbol methodSymbol)
+        private IEnumerable<StatementSyntax> BeforeTryBlock(IMethodSymbol methodSymbol, MethodVariables variables, MethodParameters args)
         {
-            var isResult = IsResult(methodSymbol);
-            yield return _idHelper.MethodVar.VarEqualsStringStatement(methodSymbol.Name);
-            yield return _idHelper.ArgsVar.VarEqualsStatement(_argsSymbols.GlobalTypeName().NewExpression());
-            yield return _idHelper.ResultVar.VarEqualsStatement(_resultSymbols.GlobalTypeName().NewExpression());
+            yield return variables.METHOD_NAME_VARIABLE.VarEqualsStringStatement(methodSymbol.Name);
+            yield return variables.ARGS_VARIABLE.VarEqualsStatement(_methodArgsSymbols.GlobalTypeName().NewExpression());
+            yield return variables.RESULT_VARIABLE.VarEqualsStatement(_methodResultSymbols.GlobalTypeName().NewExpression());
 
-            var arguments = methodSymbol.Parameters.Select(x => new { Name = x.Name.AsLiteral(), Variable = IdentifierName(x.Name) });
-            foreach (var argument in arguments)
+            foreach (var argument in args.Parameters)
             {
-                yield return _idHelper.ArgsVar.InvokeSyncStatement(_idHelper.MethodArgsSet, argument.Name, argument.Variable);
+                yield return variables.ARGS_VARIABLE.InvokeSyncStatement(
+                    Names.METHOD_ARGS_SET_METHOD,
+                    argument.OriginalName.AsLiteral(), 
+                    IdentifierName(argument.Name)
+                );
             }
         }
 
-        private IEnumerable<StatementSyntax> TryBlock(IMethodSymbol methodSymbol, CtorBuilderResult ctorResult, InterceptorsGroupHelper helper)
+        private IEnumerable<StatementSyntax> TryBlock(IMethodSymbol methodSymbol, CtorBuilderResult ctorResult, MethodVariables variables, MethodParameters args)
         {
             var isResult = IsResult(methodSymbol);
             var isAsync = IsAsync(methodSymbol);
 
-            yield return helper.EnterMethod.CallMethodSyncStatement(
-                IdentifierName(_idHelper.MethodVar),
-                IdentifierName(_idHelper.ArgsVar)
+            yield return Names.ENTER_METHOD.CallMethodSyncStatement(
+                IdentifierName(variables.METHOD_NAME_VARIABLE),
+                IdentifierName(variables.ARGS_VARIABLE)
             );
 
-            var arguments = methodSymbol.Parameters.Select(x => IdentifierName(x.Name)).ToArray();
+            var arguments = args.Parameters.Select(x => IdentifierName(x.Name)).ToArray();
             if (isResult)
             {
                 var resultExpression = isAsync
                     ? ctorResult.OriginFieldIdentifier.InvokeAwaitExpression(methodSymbol.Name, arguments)
                     : ctorResult.OriginFieldIdentifier.InvokeSyncExpression(methodSymbol.Name, arguments);
 
-                yield return _idHelper.MethodResultVar.VarEqualsStatement(resultExpression);
-                yield return _idHelper.ResultVar.InvokeSyncStatement(_idHelper.MethodResultSet, IdentifierName(_idHelper.MethodResultVar));
+                yield return variables.METHOD_RESULT_VARIABLE.VarEqualsStatement(resultExpression);
+                yield return variables.RESULT_VARIABLE.InvokeSyncStatement(Names.METHOD_RESULT_SET_METHOD, IdentifierName(variables.METHOD_RESULT_VARIABLE));
             }
             else
             {
@@ -183,24 +176,24 @@ namespace Dioxide.Proxy.Parts
                     : ctorResult.OriginFieldIdentifier.InvokeSyncStatement(methodSymbol.Name, arguments);
             }
 
-            yield return helper.ExitMethod.CallMethodSyncStatement(
-                IdentifierName(_idHelper.MethodVar),
-                IdentifierName(_idHelper.ArgsVar),
-                IdentifierName(_idHelper.ResultVar)
+            yield return Names.EXIT_METHOD.CallMethodSyncStatement(
+                IdentifierName(variables.METHOD_NAME_VARIABLE),
+                IdentifierName(variables.ARGS_VARIABLE),
+                IdentifierName(variables.RESULT_VARIABLE)
             );
 
             if (isResult)
             {
-                yield return ReturnStatement(IdentifierName(_idHelper.MethodResultVar));
+                yield return ReturnStatement(IdentifierName(variables.METHOD_RESULT_VARIABLE));
             }
         }
 
-        private IEnumerable<StatementSyntax> CatchBlock(IMethodSymbol methodSymbol, InterceptorsGroupHelper helper)
+        private IEnumerable<StatementSyntax> CatchBlock(IMethodSymbol methodSymbol, MethodVariables variables)
         {
             var isResult = IsResult(methodSymbol);
             if (isResult)
             {
-                foreach (var item in CatchOverrideResultBlock(methodSymbol, helper))
+                foreach (var item in CatchOverrideResultBlock(methodSymbol, variables))
                 {
                     yield return item;
                 }
@@ -209,43 +202,43 @@ namespace Dioxide.Proxy.Parts
 
             var ifExpr = BinaryExpression(
                 SyntaxKind.EqualsExpression, 
-                IdentifierName(_idHelper.CarchResultVar),
+                IdentifierName(variables.EXCEPTION_VARIABLE),
                 LiteralExpression(SyntaxKind.NullLiteralExpression)
             );
 
-            var exp = helper.CatchMethod.CallMethodSyncExpression(
-                IdentifierName(_idHelper.MethodVar),
-                IdentifierName(_idHelper.ArgsVar),
-                IdentifierName(_idHelper.ExceptionVar)
+            var exp = Names.CATCH_METHOD.CallMethodSyncExpression(
+                IdentifierName(variables.METHOD_NAME_VARIABLE),
+                IdentifierName(variables.ARGS_VARIABLE),
+                IdentifierName(variables.CATCH_BLOCK_EXCEPTION_VARIABLE)
             );
 
-            yield return _idHelper.CarchResultVar.VarEqualsStatement(exp);
+            yield return variables.EXCEPTION_VARIABLE.VarEqualsStatement(exp);
             yield return IfStatement(ifExpr,
                 Block(ThrowStatement()),
-                ElseClause(Block(ThrowStatement(IdentifierName(_idHelper.CarchResultVar))))
+                ElseClause(Block(ThrowStatement(IdentifierName(variables.EXCEPTION_VARIABLE))))
             );
         }
 
-        private IEnumerable<StatementSyntax> CatchOverrideResultBlock(IMethodSymbol methodSymbol, InterceptorsGroupHelper helper)
+        private IEnumerable<StatementSyntax> CatchOverrideResultBlock(IMethodSymbol methodSymbol, MethodVariables variables)
         {
             var overrideResult = "overrideResult";
 
             var isAsync = IsAsync(methodSymbol);
             var returnType = methodSymbol.ReturnType.ToQualifiedTypeName();
 
-            var overrideResultExpr = helper.CatchOverrideResultMethod.CallMethodSyncExpression(
-                IdentifierName(_idHelper.MethodVar),
-                IdentifierName(_idHelper.ArgsVar),
-                IdentifierName(_idHelper.ExceptionVar)
+            var overrideResultExpr = Names.CATCH_OVERRIDE_RESULT_METHOD.CallMethodSyncExpression(
+                IdentifierName(variables.METHOD_NAME_VARIABLE),
+                IdentifierName(variables.ARGS_VARIABLE),
+                IdentifierName(variables.CATCH_BLOCK_EXCEPTION_VARIABLE)
             );
 
             var hasResultInvokeExpr = overrideResult.InvokeSyncGenericExpression(
-                method: _idHelper.HasResult, 
+                method: Names.METHOD_RESULT_HAS_RESULT_METHOD, 
                 genericType: returnType
             );
 
             var getResultOrDefaultInvokeExpr = overrideResult.InvokeSyncGenericExpression(
-                method: _idHelper.GetResultOrDefault,
+                method: Names.GET_RESULT_OR_DEFAULT,
                 genericType: returnType
             );
 
@@ -253,18 +246,24 @@ namespace Dioxide.Proxy.Parts
                 ? AwaitExpression(getResultOrDefaultInvokeExpr)
                 : getResultOrDefaultInvokeExpr;
 
+            var exitMethod = Names.EXIT_METHOD.CallMethodSyncStatement(
+                IdentifierName(variables.METHOD_NAME_VARIABLE),
+                IdentifierName(variables.ARGS_VARIABLE),
+                IdentifierName(overrideResult)
+            );
+
             yield return overrideResult.VarEqualsStatement(overrideResultExpr);
             yield return IfStatement(hasResultInvokeExpr,
-                 Block(ReturnStatement(returnExpr))
+                 Block(exitMethod, ReturnStatement(returnExpr))
             );
         }
 
-        private IEnumerable<StatementSyntax> FinalyBlock(IMethodSymbol methodSymbol, InterceptorsGroupHelper helper)
+        private IEnumerable<StatementSyntax> FinalyBlock(IMethodSymbol methodSymbol, MethodVariables variables)
         {
-            yield return helper.FinalyMethod.CallMethodSyncStatement(
-                IdentifierName(_idHelper.MethodVar),
-                IdentifierName(_idHelper.ArgsVar),
-                IdentifierName(_idHelper.ResultVar)
+            yield return Names.FINALY_METHOD.CallMethodSyncStatement(
+                IdentifierName(variables.METHOD_NAME_VARIABLE),
+                IdentifierName(variables.ARGS_VARIABLE),
+                IdentifierName(variables.RESULT_VARIABLE)
             );
         }
 

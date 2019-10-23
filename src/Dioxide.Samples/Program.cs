@@ -6,7 +6,7 @@ namespace Dioxide.Samples
     {
         static void Main(string[] args)
         {
-            DecoratorSample.Sample();
+            ProxySample.Sample();
         }
     }
 }

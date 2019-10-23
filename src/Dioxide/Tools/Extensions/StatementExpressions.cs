@@ -9,7 +9,7 @@ namespace Dioxide.Tools.Extensions
         public static StatementSyntax SetStatement(this string identifier, string value)
         {
             var rigth = IdentifierName(value);
-            return identifier.SetStatement(rigth);
+            return identifier.SetValueStatement(rigth);
         }
 
         public static StatementSyntax InvokeSyncStatement(this string name, string method, params ExpressionSyntax[] arguments)
@@ -47,7 +47,7 @@ namespace Dioxide.Tools.Extensions
             return name.VarEqualsStatement(literalExpression);
         }
 
-        public static StatementSyntax SetStatement(this string identifier, ExpressionSyntax expr)
+        public static StatementSyntax SetValueStatement(this string identifier, ExpressionSyntax expr)
         {
             var letf = IdentifierName(identifier);
             var memberAccessExpression = AssignmentExpression(

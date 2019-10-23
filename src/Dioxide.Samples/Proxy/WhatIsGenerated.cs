@@ -1,15 +1,16 @@
-﻿namespace Dioxide.Dynamic.X2f4d388c32d548ad897bfaa595278bd7
+﻿namespace Dioxide.Dynamic.X36cedcf0195d4cc890ca7d9fc8a04fa6
 {
-    public sealed class IDoSomthing_X0e54b59c7d134ff490db6e663e941cb3 : global::Dioxide.Samples.Proxy.IDoSomthing
+    public sealed class IDoSomthing_X290665897f994f1a9874d7ce855348d4 : global::Dioxide.Samples.Proxy.IDoSomthing
     {
-        private readonly global::Dioxide.Contracts.InterceptorsGroup _interceptors;
-        private readonly global::Dioxide.Samples.Proxy.IDoSomthing _iDoSomthing;
-        public IDoSomthing_X0e54b59c7d134ff490db6e663e941cb3(global::Dioxide.Samples.Proxy.IDoSomthing iDoSomthing, global::Dioxide.Samples.Proxy.InformationVisitor informationVisitor, global::Dioxide.Samples.Proxy.MetricsVisitor metricsVisitor)
+        private readonly global::Dioxide.Contracts.InterceptorsGroup _interseptors;
+        private readonly global::Dioxide.Samples.Proxy.IDoSomthing _client;
+        public IDoSomthing_X290665897f994f1a9874d7ce855348d4(global::Dioxide.Samples.Proxy.IDoSomthing client, global::Dioxide.Samples.Proxy.Interseptors.LogInterceptor logInterceptor, global::Dioxide.Samples.Proxy.Interseptors.MetricsInterceptor metricsInterceptor, global::Dioxide.Samples.Proxy.Interseptors.ForgiveMistakesInterceptor forgiveMistakesInterceptor)
         {
-            _iDoSomthing = iDoSomthing;
-            _interceptors = new global::Dioxide.Contracts.InterceptorsGroup();
-            _interceptors.Add(informationVisitor as global::Dioxide.Contracts.IProxyInterceptor);
-            _interceptors.Add(metricsVisitor as global::Dioxide.Contracts.IProxyInterceptor);
+            _client = client;
+            _interseptors = new global::Dioxide.Contracts.InterceptorsGroup();
+            _interseptors.Add(logInterceptor as global::Dioxide.Contracts.IProxyInterceptor);
+            _interseptors.Add(metricsInterceptor as global::Dioxide.Contracts.IProxyInterceptor);
+            _interseptors.Add(forgiveMistakesInterceptor as global::Dioxide.Contracts.IProxyInterceptor);
         }
 
         public void DoSomething()
@@ -19,102 +20,106 @@
             var result = new global::Dioxide.Contracts.MethodResult();
             try
             {
-                _interceptors.Enter(method, args);
-                _iDoSomthing.DoSomething();
-                _interceptors.Exit(method, args, result);
+                _interseptors.Enter(method, args);
+                _client.DoSomething();
+                _interseptors.Exit(method, args, result);
             }
-            catch (global::System.Exception exception)
+            catch (global::System.Exception ex)
             {
-                var ex = _interceptors.Catch(method, args, exception);
-                if (ex == null)
+                var exception = _interseptors.Catch(method, args, ex);
+                if (exception == null)
                 {
                     throw;
                 }
                 else
                 {
-                    throw ex;
+                    throw exception;
                 }
             }
             finally
             {
-                _interceptors.Finaly(method, args, result);
+                _interseptors.Finaly(method, args, result);
             }
         }
 
-        public async global::System.Threading.Tasks.Task<int> GoTask(string name, int deley)
+        public async global::System.Threading.Tasks.Task<int> GoTask(string name, int delay)
         {
             var method = "GoTask";
             var args = new global::Dioxide.Contracts.MethodArgs();
             var result = new global::Dioxide.Contracts.MethodResult();
             args.Set("name", name);
-            args.Set("deley", deley);
+            args.Set("delay", delay);
             try
             {
-                _interceptors.Enter(method, args);
-                var methodResult = await _iDoSomthing.GoTask(name, deley);
+                _interseptors.Enter(method, args);
+                var methodResult = await _client.GoTask(name, delay);
                 result.Set(methodResult);
-                _interceptors.Exit(method, args, result);
+                _interseptors.Exit(method, args, result);
                 return methodResult;
             }
-            catch (global::System.Exception exception)
+            catch (global::System.Exception ex)
             {
-                var overrideResult = _interceptors.CatchOverrideResult(method, args, exception);
+                var overrideResult = _interseptors.CatchOverrideResult(method, args, ex);
                 if (overrideResult.HasResult<global::System.Threading.Tasks.Task<int>>())
                 {
+                    _interseptors.Exit(method, args, overrideResult);
                     return await overrideResult.GetResultOrDefault<global::System.Threading.Tasks.Task<int>>();
                 }
 
-                var ex = _interceptors.Catch(method, args, exception);
-                if (ex == null)
+                var exception = _interseptors.Catch(method, args, ex);
+                if (exception == null)
                 {
                     throw;
                 }
                 else
                 {
-                    throw ex;
+                    throw exception;
                 }
             }
             finally
             {
-                _interceptors.Finaly(method, args, result);
+                _interseptors.Finaly(method, args, result);
             }
         }
 
-        public int GetInteger(int value)
+        public int GetInteger(int value, int args, string _client1)
         {
             var method = "GetInteger";
-            var args = new global::Dioxide.Contracts.MethodArgs();
+            var args1 = new global::Dioxide.Contracts.MethodArgs();
             var result = new global::Dioxide.Contracts.MethodResult();
-            args.Set("value", value);
+            args1.Set("value", value);
+            args1.Set("args", args);
+            args1.Set("_client", _client1);
             try
             {
-                _interceptors.Enter(method, args);
-                var methodResult = _iDoSomthing.GetInteger(value);
+                _interseptors.Enter(method, args1);
+                var methodResult = _client.GetInteger(value, args, _client1);
                 result.Set(methodResult);
-                _interceptors.Exit(method, args, result);
+                _interseptors.Exit(method, args1, result);
                 return methodResult;
             }
-            catch (global::System.Exception exception)
+            catch (global::System.Exception ex)
             {
-                var overrideResult = _interceptors.CatchOverrideResult(method, args, exception);
+                var overrideResult = _interseptors.CatchOverrideResult(method, args1, ex);
                 if (overrideResult.HasResult<int>())
                 {
+                    _interseptors.Exit(method, args1, overrideResult);
                     return overrideResult.GetResultOrDefault<int>();
                 }
 
-                var ex = _interceptors.Catch(method, args, exception);
-                if (ex == null)
+                var exception = _interseptors.Catch(method, args1, ex);
+                if (exception == null)
                 {
                     throw;
                 }
                 else
                 {
-                    throw ex;
+                    throw exception;
                 }
             }
             finally
             {
-                _interceptors.Finaly(method, args, result);
+                _interseptors.Finaly(method, args1, result);
             }
         }
     }

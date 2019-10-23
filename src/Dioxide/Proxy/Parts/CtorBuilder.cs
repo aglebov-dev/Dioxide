@@ -11,31 +11,16 @@ using static Microsoft.CodeAnalysis.CSharp.SyntaxFactory;
 
 namespace Dioxide.Proxy.Parts
 {
-    internal class CtorBuilderResult
-    {
-        public string OriginFieldIdentifier { get; }
-        public string VisitorFieldIdentifier { get; }
-        public ConstructorDeclarationSyntax Ctor { get; }
-        public FieldDeclarationSyntax[] Fields { get; }
-        public CtorBuilderResult(string originFieldIdentifier, string visitorFieldIdentifier, ConstructorDeclarationSyntax ctor, FieldDeclarationSyntax[] fields)
-        {
-            OriginFieldIdentifier = originFieldIdentifier;
-            VisitorFieldIdentifier = visitorFieldIdentifier;
-            Ctor = ctor;
-            Fields = fields;
-        }
-    }
-
     internal class CtorBuilder
     {
-        private readonly string _visitorFieldIdentifier;
         private readonly string _visitorFieldType;
+        private readonly string _interceptions;
         private readonly INamedTypeSymbol _iVisitorSymbols;
 
         public CtorBuilder(Compilation compilation)
         {
+            _interceptions = Names.GetFieldName(Names.INTERCEPTORS_GROUP_FIELD);
             _iVisitorSymbols = compilation.GetSymbols<IProxyInterceptor>();
-            _visitorFieldIdentifier = "_interceptors";
             _visitorFieldType = compilation.GetSymbols<InterceptorsGroup>().GlobalTypeName();
         }
 
@@ -44,8 +29,8 @@ namespace Dioxide.Proxy.Parts
             types = types ?? Array.Empty<INamedTypeSymbol>();
             var ctorIdentifier = Identifier(typeName);
             var ctorModifier = Token(SyntaxKind.PublicKeyword);
-            var ctorArgumentNames = NameGenerator.GenerateNames(original, types);
-            var originalFieldName = NameGenerator.GetFieldName(ctorArgumentNames.First().Key);
+            var ctorArgumentNames = Names.GenerateCtorParamNames(original, types);
+            var originalFieldName = Names.GetFieldName(ctorArgumentNames.First().Key);
             var ctorArguments = ctorArgumentNames.Select(x => x.Value.ParameterExpression(x.Key)).ToArray();
             var ctorBodyExpressions = CtorBody(ctorArgumentNames.Keys).ToArray();
             var fields = Fields(originalFieldName, original.GlobalTypeName()).ToArray();
@@ -56,20 +41,20 @@ namespace Dioxide.Proxy.Parts
                 .AddParameterListParameters(ctorArguments)
                 .WithBody(ctorBody);
 
-            return new CtorBuilderResult(originalFieldName, _visitorFieldIdentifier, ctor, fields);
+            return new CtorBuilderResult(originalFieldName, ctor, fields);
         }
 
         private IEnumerable<StatementSyntax> CtorBody(IEnumerable<string> names)
         {
             var origin = names.First();
-
-            yield return NameGenerator.GetFieldName(origin).SetStatement(origin);
-            yield return _visitorFieldIdentifier.SetStatement(_visitorFieldType.NewExpression());
+            
+            yield return Names.GetFieldName(origin).SetStatement(origin);
+            yield return _interceptions.SetValueStatement(_visitorFieldType.NewExpression());
 
             var addToVisitorsList =
                 from x in names.Skip(1)
                 let asExpression = x.AsExpression(_iVisitorSymbols)
-                select _visitorFieldIdentifier.InvokeSyncStatement("Add", asExpression);
+                select _interceptions.InvokeSyncStatement(Names.INTERCEPTORS_GROUP_ADD_METHOD, asExpression);
 
             foreach (var item in addToVisitorsList)
             {
@@ -79,7 +64,7 @@ namespace Dioxide.Proxy.Parts
 
         private IEnumerable<FieldDeclarationSyntax> Fields(string originalName, string originalType)
         {
-            yield return _visitorFieldIdentifier.FieldExpression(_visitorFieldType);
+            yield return _interceptions.FieldExpression(_visitorFieldType);
             yield return originalName.FieldExpression(originalType);
         }
     }
