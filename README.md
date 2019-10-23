@@ -4,7 +4,7 @@
 
 ### Decorator
 
-The decorator uses the IVisitor interface. It is necessary to create an interface implementation that will be called inside the generated type
+The decorator uses the IProxyInterceptor interface. It is necessary to create an interface implementation that will be called inside the generated type
 For sample:
 ```
 public class MetricsInterceptor : IProxyInterceptor
