@@ -2,7 +2,7 @@
 
 ## Getting Started
 
-### Decorator
+### Proxy
 
 The decorator uses the IProxyInterceptor interface. It is necessary to create an interface implementation that will be called inside the generated type
 For sample:
