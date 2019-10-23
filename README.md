@@ -58,7 +58,7 @@ var buildResult = new DioxideTypeBuilder(default)
     .Build();
 ```
 
-Register types in container (using autofac container )
+Register types in container (using autofac container)
 ```
 if (buildResult.IsSuccess)
 {
@@ -69,7 +69,7 @@ if (buildResult.IsSuccess)
 }
 ```
 
-What will be generated (VisitorsGroup - implements the IVisitor interface and combines within itself the calls of the IVisitor implementations)
+What will be generated (InterceptorsGroup - implements the IProxyInterceptor interface and combines within itself the calls of the IProxyInterceptor implementations)
 ```
 public sealed class IDoSomthing_X290665897f994f1a9874d7ce855348d4 : global::Dioxide.Samples.Proxy.IDoSomthing
 {
