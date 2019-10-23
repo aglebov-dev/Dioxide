@@ -7,12 +7,15 @@
 The decorator uses the IVisitor interface. It is necessary to create an interface implementation that will be called inside the generated type
 For sample:
 ```
-using System;
-using System.Diagnostics;
-using Dioxide.Contracts;
-public class MetricsVisitor : IVisitor
+public class MetricsInterceptor : IProxyInterceptor
 {
     private Stopwatch stopwatch;
+    private readonly ILogger _logger;
+
+    public MetricsInterceptor(ILogger logger)
+    {
+        _logger = logger;
+    }
 
     public void Enter(string methodName, IMethodArgs args)
     {
@@ -21,14 +24,17 @@ public class MetricsVisitor : IVisitor
 
     public void Exit(string methodName, IMethodArgs args, IMethodResult result)
     {
-        Console.WriteLine($"Successful {methodName}. Total time: {stopwatch.ElapsedMilliseconds} ms");
+        _logger.Log($"Successful method {methodName}. Total time: {stopwatch.ElapsedMilliseconds} ms");
     }
 
-    public void Finaly(string methodName, IMethodArgs args, IMethodResult result) { }
+    public void Finaly(string methodName, IMethodArgs args, IMethodResult result) 
+    { 
+        stopwatch.Stop();  
+    }
 
     public Exception Catch(string methodName, IMethodArgs args, Exception exception)
     {
-        Console.WriteLine($"Failed {methodName}. Total time: {stopwatch.ElapsedMilliseconds} ms");
+        _logger.Log($"Failed method {methodName}. Total time: {stopwatch.ElapsedMilliseconds} ms");
         return exception;
     }
 }
@@ -38,16 +44,15 @@ Create the necessary types using the builder
 public interface IDoSomthing
 {
     void DoSomething();
-    Task<int> GoTask(string name, int deley);
+    Task<int> GoTask(string name, int delay);
+    int GetInteger(int value, int args, string client);
 }
 ```
 
 ```
-
 var buildResult = new DioxideTypeBuilder(default)
     .GenerateDecorator<IDoSomthing>(x =>
     {
-        x.With<InformationVisitor>();
         x.With<MetricsVisitor>();
     })
     .Build();
@@ -66,71 +71,127 @@ if (buildResult.IsSuccess)
 
 What will be generated (VisitorsGroup - implements the IVisitor interface and combines within itself the calls of the IVisitor implementations)
 ```
-public sealed class DoSomthing_X37aecff11fa7496eb1063f8a5479a955 : IDoSomthing
+public sealed class IDoSomthing_X290665897f994f1a9874d7ce855348d4 : global::Dioxide.Samples.Proxy.IDoSomthing
+{
+    private readonly global::Dioxide.Contracts.InterceptorsGroup _interseptors;
+    private readonly global::Dioxide.Samples.Proxy.IDoSomthing _client;
+    public IDoSomthing_X290665897f994f1a9874d7ce855348d4(global::Dioxide.Samples.Proxy.IDoSomthing client, global::Dioxide.Samples.Proxy.Interseptors.LogInterceptor logInterceptor, global::Dioxide.Samples.Proxy.Interseptors.MetricsInterceptor metricsInterceptor, global::Dioxide.Samples.Proxy.Interseptors.ForgiveMistakesInterceptor forgiveMistakesInterceptor)
     {
-        private readonly VisitorsGroup _visitors;
-        private readonly IDoSomthing _iDoSomthing;
+        _client = client;
+        _interseptors = new global::Dioxide.Contracts.InterceptorsGroup();
+        _interseptors.Add(logInterceptor as global::Dioxide.Contracts.IProxyInterceptor);
+        _interseptors.Add(metricsInterceptor as global::Dioxide.Contracts.IProxyInterceptor);
+        _interseptors.Add(forgiveMistakesInterceptor as global::Dioxide.Contracts.IProxyInterceptor);
+    }
 
-        public DoSomthing_X37aecff11fa7496eb1063f8a5479a955(IDoSomthing iDoSomthing, MetricsVisitor metricsVisitor, InformationVisitor informationVisitor)
+    public void DoSomething()
+    {
+        var method = "DoSomething";
+        var args = new global::Dioxide.Contracts.MethodArgs();
+        var result = new global::Dioxide.Contracts.MethodResult();
+        try
         {
-            _iDoSomthing = iDoSomthing;
-            _visitors = new VisitorsGroup();
-            _visitors.Add(metricsVisitor as IVisitor);
-            _visitors.Add(informationVisitor as IVisitor);
+            _interseptors.Enter(method, args);
+            _client.DoSomething();
+            _interseptors.Exit(method, args, result);
         }
-
-        public void DoSomething()
+        catch (global::System.Exception ex)
         {
-            var method = "DoSomething";
-            var args = new MethodArgs();
-            var result = new MethodResult();
-            try
+            var exception = _interseptors.Catch(method, args, ex);
+            if (exception == null)
             {
-                _visitors.Enter(method, args);
-                _iDoSomthing.DoSomething();
-                _visitors.Exit(method, args, result);
+                throw;
             }
-            catch (System.Exception exception)
+            else
             {
-                var ex = _visitors.Catch(method, args, exception);
-                if (ex == null)
-                    throw;
-                else
-                    throw ex;
-            }
-            finally
-            {
-                _visitors.Finaly(method, args, result);
+                throw exception;
             }
         }
-
-        public async Task<int> GoTask(string name, int delay)
+        finally
         {
-            var method = "GoTask";
-            var args = new MethodArgs();
-            var result = new MethodResult();
-            args.Set("name", name);
-            args.Set("delay", delay);
-            try
-            {
-                _visitors.Enter(method, args);
-                var methodResult = await _iDoSomthing.GoTask(name, delay);
-                result.Set(methodResult);
-                _visitors.Exit(method, args, result);
-                return methodResult;
-            }
-            catch (System.Exception exception)
-            {
-                var ex = _visitors.Catch(method, args, exception);
-                if (ex == null)
-                    throw;
-                else
-                    throw ex;
-            }
-            finally
-            {
-                _visitors.Finaly(method, args, result);
-            }
+            _interseptors.Finaly(method, args, result);
         }
     }
+
+    public async global::System.Threading.Tasks.Task<int> GoTask(string name, int delay)
+    {
+        var method = "GoTask";
+        var args = new global::Dioxide.Contracts.MethodArgs();
+        var result = new global::Dioxide.Contracts.MethodResult();
+        args.Set("name", name);
+        args.Set("delay", delay);
+        try
+        {
+            _interseptors.Enter(method, args);
+            var methodResult = await _client.GoTask(name, delay);
+            result.Set(methodResult);
+            _interseptors.Exit(method, args, result);
+            return methodResult;
+        }
+        catch (global::System.Exception ex)
+        {
+            var overrideResult = _interseptors.CatchOverrideResult(method, args, ex);
+            if (overrideResult.HasResult<global::System.Threading.Tasks.Task<int>>())
+            {
+                _interseptors.Exit(method, args, overrideResult);
+                return await overrideResult.GetResultOrDefault<global::System.Threading.Tasks.Task<int>>();
+            }
+
+            var exception = _interseptors.Catch(method, args, ex);
+            if (exception == null)
+            {
+                throw;
+            }
+            else
+            {
+                throw exception;
+            }
+        }
+        finally
+        {
+            _interseptors.Finaly(method, args, result);
+        }
+    }
+
+    public int GetInteger(int value, int args, string _client1)
+    {
+        var method = "GetInteger";
+        var args1 = new global::Dioxide.Contracts.MethodArgs();
+        var result = new global::Dioxide.Contracts.MethodResult();
+        args1.Set("value", value);
+        args1.Set("args", args);
+        args1.Set("_client", _client1);
+        try
+        {
+            _interseptors.Enter(method, args1);
+            var methodResult = _client.GetInteger(value, args, _client1);
+            result.Set(methodResult);
+            _interseptors.Exit(method, args1, result);
+            return methodResult;
+        }
+        catch (global::System.Exception ex)
+        {
+            var overrideResult = _interseptors.CatchOverrideResult(method, args1, ex);
+            if (overrideResult.HasResult<int>())
+            {
+                _interseptors.Exit(method, args1, overrideResult);
+                return overrideResult.GetResultOrDefault<int>();
+            }
+
+            var exception = _interseptors.Catch(method, args1, ex);
+            if (exception == null)
+            {
+                throw;
+            }
+            else
+            {
+                throw exception;
+            }
+        }
+        finally
+        {
+            _interseptors.Finaly(method, args1, result);
+        }
+    }
+}
 ```
