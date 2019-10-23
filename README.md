@@ -53,7 +53,7 @@ public interface IDoSomthing
 var buildResult = new DioxideTypeBuilder(default)
     .GenerateDecorator<IDoSomthing>(x =>
     {
-        x.With<MetricsVisitor>();
+        x.With<MetricsInterceptor>();
     })
     .Build();
 ```
@@ -75,15 +75,14 @@ public sealed class IDoSomthing_X290665897f994f1a9874d7ce855348d4 : global::Diox
 {
     private readonly global::Dioxide.Contracts.InterceptorsGroup _interseptors;
     private readonly global::Dioxide.Samples.Proxy.IDoSomthing _client;
-    public IDoSomthing_X290665897f994f1a9874d7ce855348d4(global::Dioxide.Samples.Proxy.IDoSomthing client, global::Dioxide.Samples.Proxy.Interseptors.LogInterceptor logInterceptor, global::Dioxide.Samples.Proxy.Interseptors.MetricsInterceptor metricsInterceptor, global::Dioxide.Samples.Proxy.Interseptors.ForgiveMistakesInterceptor forgiveMistakesInterceptor)
+    public IDoSomthing_X290665897f994f1a9874d7ce855348d4(global::Dioxide.Samples.Proxy.IDoSomthing client, global::Dioxide.Samples.Proxy.Interseptors.LogInterceptor logInterceptor)
     {
         _client = client;
         _interseptors = new global::Dioxide.Contracts.InterceptorsGroup();
         _interseptors.Add(logInterceptor as global::Dioxide.Contracts.IProxyInterceptor);
-        _interseptors.Add(metricsInterceptor as global::Dioxide.Contracts.IProxyInterceptor);
-        _interseptors.Add(forgiveMistakesInterceptor as global::Dioxide.Contracts.IProxyInterceptor);
     }
-
+    
+    //method without result
     public void DoSomething()
     {
         var method = "DoSomething";
@@ -112,7 +111,8 @@ public sealed class IDoSomthing_X290665897f994f1a9874d7ce855348d4 : global::Diox
             _interseptors.Finaly(method, args, result);
         }
     }
-
+    
+    //method with async result
     public async global::System.Threading.Tasks.Task<int> GoTask(string name, int delay)
     {
         var method = "GoTask";
@@ -152,7 +152,8 @@ public sealed class IDoSomthing_X290665897f994f1a9874d7ce855348d4 : global::Diox
             _interseptors.Finaly(method, args, result);
         }
     }
-
+    
+    //method with sync result
     public int GetInteger(int value, int args, string _client1)
     {
         var method = "GetInteger";
