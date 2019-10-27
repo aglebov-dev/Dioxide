@@ -1,5 +1,10 @@
 # Dioxide
 
+https://www.nuget.org/packages/Dioxide/
+```
+Install-Package Dioxide
+```
+
 ## Getting Started
 
 ### Proxy
