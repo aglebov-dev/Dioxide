@@ -11,7 +11,7 @@ Install-Package Dioxide
 
 The decorator uses the IProxyInterceptor interface. It is necessary to create an interface implementation that will be called inside the generated type
 For sample:
-```
+```csharp
 public class MetricsInterceptor : IProxyInterceptor
 {
     private Stopwatch stopwatch;
@@ -45,7 +45,7 @@ public class MetricsInterceptor : IProxyInterceptor
 }
 ```
 Create the necessary types using the builder
-```
+```csharp
 public interface IDoSomthing
 {
     void DoSomething();
@@ -54,7 +54,7 @@ public interface IDoSomthing
 }
 ```
 
-```
+```csharp
 var buildResult = new DioxideTypeBuilder(default)
     .GenerateDecorator<IDoSomthing>(x =>
     {
@@ -64,7 +64,7 @@ var buildResult = new DioxideTypeBuilder(default)
 ```
 
 Register types in container (using autofac container)
-```
+```csharp
 if (buildResult.IsSuccess)
 {
     foreach (var item in buildResult.Types)
@@ -75,7 +75,7 @@ if (buildResult.IsSuccess)
 ```
 
 What will be generated (InterceptorsGroup - implements the IProxyInterceptor interface and combines within itself the calls of the IProxyInterceptor implementations)
-```
+```csharp
 public sealed class IDoSomthing_X290665897f994f1a9874d7ce855348d4 : global::Dioxide.Samples.Proxy.IDoSomthing
 {
     private readonly global::Dioxide.Contracts.InterceptorsGroup _interseptors;
