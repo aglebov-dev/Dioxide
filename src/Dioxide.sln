@@ -5,9 +5,19 @@ VisualStudioVersion = 16.0.29209.62
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Dioxide", "Dioxide\Dioxide.csproj", "{61D0D9E3-2432-4FD8-B783-4702507167B3}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Dioxide.Autofac", "Dioxide.Autofac\Dioxide.Autofac.csproj", "{D32F199C-CB4E-4482-883F-01BB1F77B236}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Dioxide.Autofac", "Dioxide.Autofac\Dioxide.Autofac.csproj", "{D32F199C-CB4E-4482-883F-01BB1F77B236}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Dioxide.Samples", "Dioxide.Samples\Dioxide.Samples.csproj", "{7D339ECC-0340-408D-ACF3-ED9A09612DC2}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Dioxide.Samples", "Dioxide.Samples\Dioxide.Samples.csproj", "{7D339ECC-0340-408D-ACF3-ED9A09612DC2}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Dioxide.Compilation", "Dioxide.Compilation\Dioxide.Compilation.csproj", "{2F36D1C0-0601-4D79-8F6C-7F2CC3FCCA37}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tests", "Tests", "{33526129-5AF8-439F-A3BD-8A9622C8227F}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Dioxide.UnitTests", "Dioxide.UnitTests\Dioxide.UnitTests.csproj", "{96618594-B714-485C-82CD-FE7109C45F12}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Old", "Old", "{0E099B3C-5257-495B-8815-8CF146149C9E}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Dioxide.Tools", "Dioxide.Tools\Dioxide.Tools.csproj", "{389802F9-857B-4346-970A-3D6C9469989F}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -27,9 +37,27 @@ Global
 		{7D339ECC-0340-408D-ACF3-ED9A09612DC2}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{7D339ECC-0340-408D-ACF3-ED9A09612DC2}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{7D339ECC-0340-408D-ACF3-ED9A09612DC2}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2F36D1C0-0601-4D79-8F6C-7F2CC3FCCA37}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2F36D1C0-0601-4D79-8F6C-7F2CC3FCCA37}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2F36D1C0-0601-4D79-8F6C-7F2CC3FCCA37}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2F36D1C0-0601-4D79-8F6C-7F2CC3FCCA37}.Release|Any CPU.Build.0 = Release|Any CPU
+		{96618594-B714-485C-82CD-FE7109C45F12}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{96618594-B714-485C-82CD-FE7109C45F12}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{96618594-B714-485C-82CD-FE7109C45F12}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{96618594-B714-485C-82CD-FE7109C45F12}.Release|Any CPU.Build.0 = Release|Any CPU
+		{389802F9-857B-4346-970A-3D6C9469989F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{389802F9-857B-4346-970A-3D6C9469989F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{389802F9-857B-4346-970A-3D6C9469989F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{389802F9-857B-4346-970A-3D6C9469989F}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{61D0D9E3-2432-4FD8-B783-4702507167B3} = {0E099B3C-5257-495B-8815-8CF146149C9E}
+		{D32F199C-CB4E-4482-883F-01BB1F77B236} = {0E099B3C-5257-495B-8815-8CF146149C9E}
+		{7D339ECC-0340-408D-ACF3-ED9A09612DC2} = {0E099B3C-5257-495B-8815-8CF146149C9E}
+		{96618594-B714-485C-82CD-FE7109C45F12} = {33526129-5AF8-439F-A3BD-8A9622C8227F}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {7DD68286-9FEB-4EE9-8158-8F06CE21936F}

@@ -1,0 +1,30 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net5.0</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Remove="Resources\InhType.cs" />
+    <Compile Remove="Resources\SimpleType.cs" />
+    <Compile Remove="Resources\TestTypeOfT.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="Resources\InhType.cs" />
+    <EmbeddedResource Include="Resources\SimpleType.cs" />
+    <EmbeddedResource Include="Resources\TestTypeOfT.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.CodeAnalysis.Common" Version="3.11.0" />
+    <PackageReference Include="xunit" Version="2.4.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Dioxide.Compilation\Dioxide.Compilation.csproj" />
+    <ProjectReference Include="..\Dioxide.Tools\Dioxide.Tools.csproj" />
+    <ProjectReference Include="..\Dioxide\Dioxide.csproj" />
+  </ItemGroup>
+
+</Project>
